@@ -6,9 +6,11 @@ import './style.scss';
 function App() {
   return (
     <div>
-      <Home/>
+      <Register/>
     </div>
   );
 }
 
 export default App;
+
+//53:37
