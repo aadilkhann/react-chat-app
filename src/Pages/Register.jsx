@@ -1,31 +1,59 @@
-import React from 'react'
+import React, { useState } from 'react'
 import add from "../img/addAvatar.png"
 // import createUserWithEmailAndPassword from "firebase/auth";
-// import {auth} from '../firebase'
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { storage, auth } from '../firebase'
+import { updateProfile, createUserWithEmailAndPassword } from "firebase/auth";
+// import { getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 
 const Register = () => {
+  let [err, setErr] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const displayName = e.target[0].value;
+    // console.log(e.target[0].value)
     const email = e.target[1].value;
     const password = e.target[2].value;
     const file = e.target[3].files[0];
 
-    const auth = getAuth();
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
-        console.log(user)
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        
-      });
+    // const auth = getAuth();
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+
+
+
+      // const storage = getStorage();
+      const storageRef = ref(storage, displayName);
+
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      // Register three observers:
+      // 1. 'state_changed' observer, called any time the state changes
+      // 2. Error observer, called on failure
+      // 3. Completion observer, called on successful completion
+      uploadTask.on(
+        (error) => {
+          setErr(true);
+          // Handle unsuccessful uploads
+        },
+        () => {
+          // Handle successful uploads on complete
+          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+          getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+            await updateProfile(res.user, {
+              displayName,
+              photoURL: downloadURL
+            })
+          });
+        }
+      );
+
+    }
+    catch (err) {
+      setErr(true)
+    }
 
   }
 
@@ -44,6 +72,7 @@ const Register = () => {
             <span>Add an Avatar</span>
           </label>
           <button>Sign-Up</button>
+          {err && <span>Something Went Wrong</span>}
         </form>
         <p>Already have an Account? Login </p>
       </div>
