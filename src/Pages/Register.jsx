@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import add from "../img/addAvatar.png"
 // import createUserWithEmailAndPassword from "firebase/auth";
-import { storage, auth } from '../firebase'
+import { storage, auth, db } from '../firebase'
 import { updateProfile, createUserWithEmailAndPassword } from "firebase/auth";
 // import { getDownloadURL } from 'firebase/storage';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { doc, setDoc } from "firebase/firestore";
 
 
 const Register = () => {
@@ -45,11 +46,19 @@ const Register = () => {
             await updateProfile(res.user, {
               displayName,
               photoURL: downloadURL
-            })
+            });
+
+            await setDoc(doc(db,"user",res.user.uid),{
+              uid:res.user.uid,
+              displayName,
+              email,
+              photoURL:downloadURL
+            });
+            console.log(res.user.uid)
+
           });
         }
       );
-
     }
     catch (err) {
       setErr(true)
@@ -68,7 +77,7 @@ const Register = () => {
           <input type="password" placeholder='Password' />
           <input style={{ display: 'none' }} type="file" id='file' />
           <label htmlFor='file'>
-            <img src={add} />
+            <img src={add} alt="add" />
             <span>Add an Avatar</span>
           </label>
           <button>Sign-Up</button>
